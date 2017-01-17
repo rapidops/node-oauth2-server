@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Module dependencies.
@@ -115,9 +114,8 @@ describe('AuthorizationCodeGrantType integration', function() {
       var token = {};
       var model = {
         getAuthorizationCode: function() { return { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() * 2), user: {} }; },
-        revokeAuthorizationCode: function() { return true; },
-        saveToken: function() { return token; },
-        validateScope: function() { return 'foo'; }
+        revokeAuthorizationCode: function() { return { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() / 2), user: {} }; },
+        saveToken: function() { return token; }
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
       var request = new Request({ body: { code: 12345 }, headers: {}, method: {}, query: {} });
@@ -133,7 +131,7 @@ describe('AuthorizationCodeGrantType integration', function() {
       var client = { id: 'foobar' };
       var model = {
         getAuthorizationCode: function() { return Promise.resolve({ authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() * 2), user: {} }); },
-        revokeAuthorizationCode: function() { return true; },
+        revokeAuthorizationCode: function() { return Promise.resolve({ authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() / 2), user: {} }) },
         saveToken: function() {}
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
@@ -146,21 +144,8 @@ describe('AuthorizationCodeGrantType integration', function() {
       var client = { id: 'foobar' };
       var model = {
         getAuthorizationCode: function() { return { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() * 2), user: {} }; },
-        revokeAuthorizationCode: function() { return true; },
+        revokeAuthorizationCode: function() { return { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() / 2), user: {} }; },
         saveToken: function() {}
-      };
-      var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
-      var request = new Request({ body: { code: 12345 }, headers: {}, method: {}, query: {} });
-
-      grantType.handle(request, client).should.be.an.instanceOf(Promise);
-    });
-
-    it('should support callbacks', function() {
-      var client = { id: 'foobar' };
-      var model = {
-        getAuthorizationCode: function(code, callback) { callback(null, { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() * 2), user: {} }); },
-        revokeAuthorizationCode: function(code, callback) { callback(null, { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() / 2), user: {} }); },
-        saveToken: function(tokenToSave, client, user, callback) { callback(null, tokenToSave); }
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
       var request = new Request({ body: { code: 12345 }, headers: {}, method: {}, query: {} });
@@ -387,20 +372,6 @@ describe('AuthorizationCodeGrantType integration', function() {
 
       grantType.getAuthorizationCode(request, client).should.be.an.instanceOf(Promise);
     });
-
-    it('should support callbacks', function() {
-      var authorizationCode = { authorizationCode: 12345, client: { id: 'foobar' }, expiresAt: new Date(new Date() * 2), user: {} };
-      var client = { id: 'foobar' };
-      var model = {
-        getAuthorizationCode: function(code, callback) { callback(null, authorizationCode); },
-        revokeAuthorizationCode: function() {},
-        saveToken: function() {}
-      };
-      var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
-      var request = new Request({ body: { code: 12345 }, headers: {}, method: {}, query: {} });
-
-      grantType.getAuthorizationCode(request, client).should.be.an.instanceOf(Promise);
-    });
   });
 
   describe('validateRedirectUri()', function() {
@@ -428,7 +399,7 @@ describe('AuthorizationCodeGrantType integration', function() {
       var authorizationCode = { authorizationCode: 12345, client: {}, expiresAt: new Date(new Date() / 2), redirectUri: 'http://foo.bar', user: {} };
       var model = {
         getAuthorizationCode: function() {},
-        revokeAuthorizationCode: function() { return true; },
+        revokeAuthorizationCode: function() { return authorizationCode; },
         saveToken: function() {}
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
@@ -450,7 +421,7 @@ describe('AuthorizationCodeGrantType integration', function() {
       var authorizationCode = { authorizationCode: 12345, client: {}, expiresAt: new Date(new Date() / 2), user: {} };
       var model = {
         getAuthorizationCode: function() {},
-        revokeAuthorizationCode: function() { return true; },
+        revokeAuthorizationCode: function() { return authorizationCode; },
         saveToken: function() {}
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
@@ -466,7 +437,7 @@ describe('AuthorizationCodeGrantType integration', function() {
       var authorizationCode = { authorizationCode: 12345, client: {}, expiresAt: new Date(new Date() / 2), user: {} };
       var model = {
         getAuthorizationCode: function() {},
-        revokeAuthorizationCode: function() { return Promise.resolve(true); },
+        revokeAuthorizationCode: function() { return Promise.resolve(authorizationCode); },
         saveToken: function() {}
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
@@ -485,18 +456,6 @@ describe('AuthorizationCodeGrantType integration', function() {
 
       grantType.revokeAuthorizationCode(authorizationCode).should.be.an.instanceOf(Promise);
     });
-
-    it('should support callbacks', function() {
-      var authorizationCode = { authorizationCode: 12345, client: {}, expiresAt: new Date(new Date() / 2), user: {} };
-      var model = {
-        getAuthorizationCode: function() {},
-        revokeAuthorizationCode: function(code, callback) { callback(null, authorizationCode); },
-        saveToken: function() {}
-      };
-      var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
-
-      grantType.revokeAuthorizationCode(authorizationCode).should.be.an.instanceOf(Promise);
-    });
   });
 
   describe('saveToken()', function() {
@@ -505,8 +464,7 @@ describe('AuthorizationCodeGrantType integration', function() {
       var model = {
         getAuthorizationCode: function() {},
         revokeAuthorizationCode: function() {},
-        saveToken: function() { return token; },
-        validateScope: function() { return 'foo'; }
+        saveToken: function() { return token; }
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
 
@@ -535,18 +493,6 @@ describe('AuthorizationCodeGrantType integration', function() {
         getAuthorizationCode: function() {},
         revokeAuthorizationCode: function() {},
         saveToken: function() { return token; }
-      };
-      var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
-
-      grantType.saveToken(token).should.be.an.instanceOf(Promise);
-    });
-
-    it('should support callbacks', function() {
-      var token = {};
-      var model = {
-        getAuthorizationCode: function() {},
-        revokeAuthorizationCode: function() {},
-        saveToken: function(tokenToSave, client, user, callback) { callback(null, token); }
       };
       var grantType = new AuthorizationCodeGrantType({ accessTokenLifetime: 123, model: model });
 

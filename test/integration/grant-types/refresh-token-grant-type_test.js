@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Module dependencies.
@@ -133,7 +132,7 @@ describe('RefreshTokenGrantType integration', function() {
       var client = { id: 123 };
       var model = {
         getRefreshToken: function() { return Promise.resolve({ accessToken: 'foo', client: { id: 123 }, user: {} }); },
-        revokeToken: function() { return Promise.resolve({ accessToken: 'foo', client: {}, refreshTokenExpiresAt: new Date(new Date() / 2), user: {} }); },
+        revokeToken: function() { return Promise.resolve({ accessToken: 'foo', client: {}, refreshTokenExpiresAt: new Date(new Date() / 2), user: {} }) },
         saveToken: function() { return Promise.resolve({ accessToken: 'foo', client: {}, user: {} }); }
       };
       var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
@@ -148,19 +147,6 @@ describe('RefreshTokenGrantType integration', function() {
         getRefreshToken: function() { return { accessToken: 'foo', client: { id: 123 }, user: {} }; },
         revokeToken: function() { return { accessToken: 'foo', client: {}, refreshTokenExpiresAt: new Date(new Date() / 2), user: {} }; },
         saveToken: function() { return { accessToken: 'foo', client: {}, user: {} }; }
-      };
-      var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
-      var request = new Request({ body: { refresh_token: 'foobar' }, headers: {}, method: {}, query: {} });
-
-      grantType.handle(request, client).should.be.an.instanceOf(Promise);
-    });
-
-    it('should support callbacks', function() {
-      var client = { id: 123 };
-      var model = {
-        getRefreshToken: function(refreshToken, callback) { callback(null, { accessToken: 'foo', client: { id: 123 }, user: {} }); },
-        revokeToken: function(refreshToken, callback) { callback(null, { accessToken: 'foo', client: {}, refreshTokenExpiresAt: new Date(new Date() / 2), user: {} }); },
-        saveToken: function(tokenToSave, client, user, callback) { callback(null,{ accessToken: 'foo', client: {}, user: {} }); }
       };
       var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
       var request = new Request({ body: { refresh_token: 'foobar' }, headers: {}, method: {}, query: {} });
@@ -416,20 +402,6 @@ describe('RefreshTokenGrantType integration', function() {
 
       grantType.getRefreshToken(request, client).should.be.an.instanceOf(Promise);
     });
-
-    it('should support callbacks', function() {
-      var client = { id: 123 };
-      var token = { accessToken: 'foo', client: { id: 123 }, user: {} };
-      var model = {
-        getRefreshToken: function(refreshToken, callback) { callback(null, token); },
-        revokeToken: function() {},
-        saveToken: function() {}
-      };
-      var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
-      var request = new Request({ body: { refresh_token: 'foobar' }, headers: {}, method: {}, query: {} });
-
-      grantType.getRefreshToken(request, client).should.be.an.instanceOf(Promise);
-    });
   });
 
   describe('revokeToken()', function() {
@@ -446,6 +418,38 @@ describe('RefreshTokenGrantType integration', function() {
         .catch(function (e) {
           e.should.be.an.instanceOf(InvalidGrantError);
           e.message.should.equal('Invalid grant: refresh token is invalid');
+        });
+    });
+
+    it('should throw an error if the `token.refreshTokenExpiresAt` is invalid', function() {
+      var model = {
+        getRefreshToken: function() {},
+        revokeToken: function() { return { refreshTokenExpiresAt: [] }; },
+        saveToken: function() {}
+      };
+      var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 120, model: model });
+
+      grantType.revokeToken({})
+        .then(should.fail)
+        .catch(function (e) {
+          e.should.be.an.instanceOf(ServerError);
+          e.message.should.equal('Server error: `refreshTokenExpiresAt` must be a Date instance');
+        });
+    });
+
+    it('should throw an error if the `token.refreshTokenExpiresAt` is not expired', function() {
+      var model = {
+        getRefreshToken: function() {},
+        revokeToken: function() { return { refreshTokenExpiresAt: new Date(new Date() * 2) }; },
+        saveToken: function() {}
+      };
+      var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 120, model: model });
+
+      grantType.revokeToken({})
+        .then(should.fail)
+        .catch(function (e) {
+          e.should.be.an.instanceOf(ServerError);
+          e.message.should.equal('Server error: refresh token should be expired');
         });
     });
 
@@ -482,18 +486,6 @@ describe('RefreshTokenGrantType integration', function() {
       var model = {
         getRefreshToken: function() {},
         revokeToken: function() { return token; },
-        saveToken: function() {}
-      };
-      var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
-
-      grantType.revokeToken(token).should.be.an.instanceOf(Promise);
-    });
-
-    it('should support callbacks', function() {
-      var token = { accessToken: 'foo', client: {}, refreshTokenExpiresAt: new Date(new Date() / 2), user: {} };
-      var model = {
-        getRefreshToken: function() {},
-        revokeToken: function(refreshToken, callback) { callback(null, token); },
         saveToken: function() {}
       };
       var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
@@ -537,18 +529,6 @@ describe('RefreshTokenGrantType integration', function() {
         getRefreshToken: function() {},
         revokeToken: function() {},
         saveToken: function() { return token; }
-      };
-      var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
-
-      grantType.saveToken(token).should.be.an.instanceOf(Promise);
-    });
-
-    it('should support callbacks', function() {
-      var token = {};
-      var model = {
-        getRefreshToken: function() {},
-        revokeToken: function() {},
-        saveToken: function(tokenToSave, client, user, callback) { callback(null, token); }
       };
       var grantType = new RefreshTokenGrantType({ accessTokenLifetime: 123, model: model });
 

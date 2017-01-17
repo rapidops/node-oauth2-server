@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Module dependencies.
@@ -52,7 +51,7 @@ describe('BearerTokenType integration', function() {
       value.should.eql({
         access_token: 'foo',
         expires_in: 'bar',
-        token_type: 'Bearer'
+        token_type: 'bearer'
       });
     });
 
@@ -62,7 +61,7 @@ describe('BearerTokenType integration', function() {
 
       value.should.eql({
         access_token: 'foo',
-        token_type: 'Bearer'
+        token_type: 'bearer'
       });
     });
 
@@ -74,7 +73,7 @@ describe('BearerTokenType integration', function() {
         access_token: 'foo',
         expires_in: 'bar',
         refresh_token: 'biz',
-        token_type: 'Bearer'
+        token_type: 'bearer'
       });
     });
 
@@ -86,7 +85,7 @@ describe('BearerTokenType integration', function() {
         access_token: 'foo',
         expires_in: 'bar',
         refresh_token: 'biz',
-        token_type: 'Bearer'
+        token_type: 'bearer'
       });
     });
   });

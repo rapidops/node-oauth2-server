@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Module dependencies.
@@ -42,7 +41,6 @@ describe('ClientCredentialsGrantType', function() {
       };
       var handler = new ClientCredentialsGrantType({ accessTokenLifetime: 120, model: model });
 
-      sinon.stub(handler, 'validateScope').returns('foobar');
       sinon.stub(handler, 'generateAccessToken').returns('foo');
       sinon.stub(handler, 'getAccessTokenExpiresAt').returns('biz');
 

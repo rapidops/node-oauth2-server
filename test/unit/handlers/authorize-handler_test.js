@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Module dependencies.
@@ -7,7 +6,6 @@
 var AuthorizeHandler = require('../../../lib/handlers/authorize-handler');
 var Request = require('../../../lib/request');
 var Response = require('../../../lib/response');
-var Promise = require('bluebird');
 var sinon = require('sinon');
 var should = require('should');
 
@@ -47,7 +45,7 @@ describe('AuthorizeHandler', function() {
       return handler.getClient(request)
         .then(function() {
           model.getClient.callCount.should.equal(1);
-          model.getClient.firstCall.args.should.have.length(2);
+          model.getClient.firstCall.args.should.have.length(1);
           model.getClient.firstCall.args[0].should.equal(12345);
         })
         .catch(should.fail);

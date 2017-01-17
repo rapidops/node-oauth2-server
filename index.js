@@ -1,4 +1,3 @@
-'use strict';
 
 /**
  * Expose server and request/response classes.
